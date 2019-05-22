@@ -24,8 +24,8 @@ from mycompress import *
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
-parser.add_argument('--resume', '-r', default= False, action='store_true', help='resume from checkpoint')
+parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
+parser.add_argument('--resume', '-r', default= True, action='store_true', help='resume from checkpoint')
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -174,5 +174,5 @@ for para in net.parameters():
 
 for epoch in range(start_epoch, start_epoch+200):
     train(epoch)
-    test(epoch)
+    # test(epoch)
 

@@ -77,11 +77,13 @@ class EC_Adam(Optimizer):
                     state['exp_avg'] = torch.zeros_like(p.data)
                     # Exponential moving average of squared gradient values
                     state['exp_avg_sq'] = torch.zeros_like(p.data)
+                    state['his_dom'] = torch.zeros_like(p.data)
                     if amsgrad:
                         # Maintains max of all exp. moving avg. of sq. grad. values
                         state['max_exp_avg_sq'] = torch.zeros_like(p.data)
 
                 exp_avg, exp_avg_sq = state['exp_avg'], state['exp_avg_sq']
+                his_dom = state['his_dom']
                 if amsgrad:
                     max_exp_avg_sq = state['max_exp_avg_sq']
                 beta1, beta2 = group['betas']
@@ -94,13 +96,10 @@ class EC_Adam(Optimizer):
                 # Decay the first and second moment running average coefficient
 
 
-                com_grad = topk_compress(grad)
+
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
 
-                exp_avg.mul_(beta1).add_(1 - beta1, grad)
-                com_exp_avg = topk_compress(exp_avg + p.erbuf)
-                p.erbuf = exp_avg + p.erbuf - com_exp_avg
-                exp_avg = com_exp_avg
+
 
 
                 if amsgrad:
@@ -115,7 +114,17 @@ class EC_Adam(Optimizer):
                 bias_correction2 = 1 - beta2 ** state['step']
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
-                p.data.addcdiv_(-step_size, exp_avg, denom)
+                exp_avg.mul_(beta1).add_(1 - beta1, grad)
+                # com_exp_avg = topk_compress(exp_avg + p.erbuf)
+                # p.erbuf = exp_avg + p.erbuf - com_exp_avg
+                # exp_avg = com_exp_avg
+
+                dp = exp_avg/denom
+                p.data.add_(-step_size,dp)
+
+                # p.data.addcdiv_(-step_size, exp_avg, denom)
+                his_dom = denom
+
 
         return loss
 
@@ -207,10 +216,12 @@ class Adam(Optimizer):
                     grad.add_(group['weight_decay'], p.data)
 
                 # Decay the first and second moment running average coefficient
+                p.grad = topk_compress(p.grad)
+
                 exp_avg.mul_(beta1).add_(1 - beta1, grad)
-                com_exp_avg = topk_compress(exp_avg)
-                p.erbuf = exp_avg + p.erbuf - com_exp_avg
-                exp_avg = com_exp_avg
+                # com_exp_avg = topk_compress(exp_avg)
+                # p.erbuf = exp_avg + p.erbuf - com_exp_avg
+                # exp_avg = com_exp_avg
 
                 # com_grad = topk_compress(grad)
                 exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)

@@ -14,17 +14,17 @@ import os
 import argparse
 
 import myoptim
+
 import EC_Adam
 
 from models.resnet import ResNet50
-from utils import progress_bar
 from mycompress import *
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0" # GPU ID
+# os.environ["CUDA_VISIBLE_DEVICES"] = "2" # GPU ID
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', default= True, action='store_true', help='resume from checkpoint')
 args = parser.parse_args()
 
@@ -53,7 +53,7 @@ train_sampler = torch.utils.data.SequentialSampler(trainset)
 # n_valid_examples = len(trainset) - n_train_examples
 #
 # trainset, _ = torch.utils.data.random_split(trainset, [n_train_examples, n_valid_examples])
-trainloader = torch.utils.data.DataLoader(trainset, sampler = train_sampler , batch_size=250, shuffle=False, num_workers=1)
+trainloader = torch.utils.data.DataLoader(trainset, sampler = train_sampler , batch_size=600, shuffle=False, num_workers=1)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
@@ -65,7 +65,7 @@ print('==> Building model..')
 # net = VGG('VGG19')
 net = ResNet50()
 
-
+net = nn.DataParallel(net,device_ids =[2,3])
 
 
 # net = PreActResNet18()
@@ -94,7 +94,7 @@ if args.resume:
 
 criterion = nn.CrossEntropyLoss()
 optimizer = EC_Adam.Adam(net.parameters(), lr = args.lr)
-# optimizer = myoptim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=0)
+# optimizer = myoptim.EC_SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=0)
 
 # Training
 def train(epoch):
@@ -153,8 +153,6 @@ def test(epoch):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
     # Save checkpoint.
     acc = 100.*correct/total
@@ -177,3 +175,4 @@ for para in net.parameters():
 for epoch in range(start_epoch, start_epoch+200):
     train(epoch)
     # test(epoch)
+
