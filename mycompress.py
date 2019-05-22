@@ -45,7 +45,7 @@ def tenary_compress(grad):
     return gradient
 
 
-def topk_compress(grad,alpha = 0.005):
+def topk_compress(grad,alpha = 0.1):
     num = int((grad.nelement()*alpha)) + 1
     sp = grad.shape
 

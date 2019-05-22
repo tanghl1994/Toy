@@ -25,7 +25,7 @@ from mycompress import *
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
-parser.add_argument('--resume', '-r', default= True, action='store_true', help='resume from checkpoint')
+parser.add_argument('--resume', '-r', default= False, action='store_true', help='resume from checkpoint')
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -53,7 +53,7 @@ train_sampler = torch.utils.data.SequentialSampler(trainset)
 # n_valid_examples = len(trainset) - n_train_examples
 #
 # trainset, _ = torch.utils.data.random_split(trainset, [n_train_examples, n_valid_examples])
-trainloader = torch.utils.data.DataLoader(trainset, sampler = train_sampler , batch_size=600, shuffle=False, num_workers=1)
+trainloader = torch.utils.data.DataLoader(trainset, sampler = train_sampler , batch_size=1000, shuffle=False, num_workers=1)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
@@ -65,7 +65,7 @@ print('==> Building model..')
 # net = VGG('VGG19')
 net = ResNet50()
 
-net = nn.DataParallel(net,device_ids =[2,3])
+net = nn.DataParallel(net,device_ids =[0,1,2,3])
 
 
 # net = PreActResNet18()

@@ -120,7 +120,9 @@ class EC_Adam(Optimizer):
                 # exp_avg = com_exp_avg
 
                 dp = exp_avg/denom
-                p.data.add_(-step_size,dp)
+                sdp = topk_compress(dp + p.erbuf)
+                p.erbuf = dp - sdp
+                p.data.add_(-step_size,sdp)
 
                 # p.data.addcdiv_(-step_size, exp_avg, denom)
                 his_dom = denom
@@ -216,7 +218,7 @@ class Adam(Optimizer):
                     grad.add_(group['weight_decay'], p.data)
 
                 # Decay the first and second moment running average coefficient
-                p.grad = topk_compress(p.grad)
+                #p.grad = topk_compress(p.grad)
 
                 exp_avg.mul_(beta1).add_(1 - beta1, grad)
                 # com_exp_avg = topk_compress(exp_avg)
@@ -238,6 +240,12 @@ class Adam(Optimizer):
                 bias_correction2 = 1 - beta2 ** state['step']
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
-                p.data.addcdiv_(-step_size, exp_avg, denom)
+                #p.data.addcdiv_(-step_size, exp_avg, denom)
+                dp = exp_avg/denom
+                sdp = topk_compress(dp)
+                p.erbuf = dp - sdp
+                p.data.add_(-step_size,dp)
+
+
 
         return loss
