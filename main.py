@@ -18,7 +18,6 @@ import myoptim
 import EC_Adam
 
 from models.resnet import ResNet50
-from utils import progress_bar
 from mycompress import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "2" # GPU ID
